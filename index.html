@@ -7,6 +7,7 @@
   <title>Adventskalender – Auslosung</title>
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="extras.css">
 </head>
 <body>
 <main class="shell">
@@ -16,8 +17,8 @@
       <span id="todayLabel" class="hidden-helper"></span>
       <label class="switch"><span>Tagesmodus</span><input id="autoDayToggle" type="checkbox"></label>
       <button id="installBtn" class="top-button" hidden>App installieren</button>
-      <button id="exportBtn" class="top-button">Backup exportieren</button>
-      <label class="file-button">Backup importieren<input id="importFile" type="file" accept="application/json"></label>
+      <button id="exportBtn" class="top-button" hidden>Backup exportieren</button>
+      <label class="file-button" hidden>Backup importieren<input id="importFile" type="file" accept="application/json"></label>
     </div>
   </header>
   <section class="intro">
@@ -38,7 +39,6 @@
       <hr>
       <p class="eyebrow">Teilnehmer-Vorschau</p>
       <div id="peoplePreview" class="preview">Noch keine Personen eingetragen.</div>
-      <p class="small">Gleiche Namen bitte eindeutig ergänzen.</p>
     </aside>
     <section class="stage">
       <div class="stage-top"><span class="ready">Bereit für die nächste Ziehung</span><span id="doorStatus" class="status">Offen</span></div>
@@ -115,5 +115,7 @@
   updateCounts();
 })();
 </script>
+<script src="extras.js"></script>
+<script>document.querySelector('.effects-switch small').textContent='Sterne · ohne Ton';</script>
 </body>
 </html>
