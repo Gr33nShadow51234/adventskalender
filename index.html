@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171321">
+  <title>Adventskalender – Auslosung</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">✦</span><div><strong>Adventskalender</strong><small>Auslosung &amp; Geschenkverwaltung</small></div></div>
+    <div class="top-actions">
+      <span id="todayLabel" class="today-label"></span>
+      <button id="installBtn" class="button secondary" hidden>App installieren</button>
+      <button id="exportBtn" class="button secondary">Backup exportieren</button>
+      <label class="button secondary file-button">Backup importieren<input id="importFile" type="file" accept="application/json"></label>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="intro">
+      <div>
+        <p class="eyebrow">DIE VORWEIHNACHTSZEIT</p>
+        <h1>Die tägliche <span>Überraschung.</span></h1>
+        <p class="muted">Verwalte Türchen, Geschenke und Ziehungen an einem Ort.</p>
+      </div>
+      <div class="progress-card">
+        <div class="progress-top"><span>Fortschritt</span><strong id="progressText">0 / 24 geöffnet</strong></div>
+        <div class="progress-track"><div id="progressBar"></div></div>
+        <small id="progressHint">Noch ist alles offen.</small>
+      </div>
+    </section>
+
+    <section class="main-grid">
+      <div class="panel calendar-panel">
+        <div class="section-heading">
+          <div><p class="eyebrow">ÜBERSICHT</p><h2>24 Türchen</h2></div>
+          <div class="legend"><span><i class="dot available"></i> Offen</span><span><i class="dot done"></i> Abgeschlossen</span><span><i class="dot locked"></i> Gesperrt</span></div>
+        </div>
+        <div id="calendar" class="calendar"></div>
+      </div>
+
+      <aside class="panel detail-panel">
+        <div class="section-heading">
+          <div><p class="eyebrow">VERWALTUNG</p><h2 id="selectedTitle">Türchen 1</h2></div>
+          <span id="doorStatus" class="status">Offen</span>
+        </div>
+        <label class="field-label" for="prizeInput">Gezogenes Geschenk</label>
+        <input id="prizeInput" class="text-input" placeholder="Wird bei der Ziehung vergeben" readonly>
+        <label class="field-label" for="notesInput">Notiz (optional)</label>
+        <textarea id="notesInput" class="text-input" rows="2" placeholder="Weitere Informationen"></textarea>
+        <div class="button-row">
+          <button id="saveDoorBtn" class="button primary">Änderungen speichern</button>
+          <button id="lockDoorBtn" class="button secondary">Türchen sperren</button>
+        </div>
+        <div class="divider"></div>
+        <div class="draw-heading"><div><p class="eyebrow">AUSLOSUNG</p><h3>Teilnehmer ziehen</h3></div><span class="draw-icon">↗</span></div>
+        <label class="field-label" for="participantsInput">Teilnehmer (eine Person pro Zeile)</label>
+        <textarea id="participantsInput" class="text-input participant-input" rows="5" placeholder="Alex&#10;Sam&#10;Chris"></textarea>
+        <label class="field-label" for="giftsInput">Geschenke-Pool (ein Geschenk pro Zeile)</label>
+        <textarea id="giftsInput" class="text-input participant-input" rows="5" placeholder="Gutschein&#10;Schokolade&#10;Tasse"></textarea>
+        <p class="help-text">Jeder Personenname und jeder Geschenkname kann nur einmal gezogen werden. Bereits gezogene Personen sind auch nach einer Ersatzziehung ausgeschlossen. Doppelte Einträge werden ignoriert.</p>
+        <div class="button-row">
+          <button id="drawBtn" class="button primary">Person &amp; Geschenk ziehen</button>
+          <button id="absenceBtn" class="button secondary">Ersatz ziehen</button>
+        </div>
+        <div id="drawResult" class="result-box" aria-live="polite">Noch keine Ziehung für dieses Türchen.</div>
+        <div class="button-row">
+          <button id="completeBtn" class="button success">Türchen abschließen</button>
+          <button id="reopenBtn" class="button secondary">Wieder öffnen</button>
+        </div>
+        <p class="help-text">Erst beim Klicken werden Person und Geschenk zufällig gezogen. Bei einer Ersatzziehung bleibt das Geschenk und alle bisherigen Personen dieses Türchens sind ausgeschlossen. Ziehungen werden im Backup gespeichert.</p>
+      </aside>
+    </section>
+
+    <section class="bottom-grid">
+      <div class="panel">
+        <div class="section-heading"><div><p class="eyebrow">AUTOMATIK</p><h2>Tagesmodus</h2></div><span class="pill">Optional</span></div>
+        <p class="muted">Aktiviert automatisch das Türchen des heutigen Dezembertages. Andere Türchen bleiben weiterhin manuell auswählbar.</p>
+        <label class="toggle-line"><span><strong>Automatischen Tagesmodus aktivieren</strong><small>Nur vom 1. bis 24. Dezember relevant</small></span><input id="autoDayToggle" type="checkbox"><i></i></label>
+        <p id="autoDayInfo" class="help-text"></p>
+      </div>
+      <div class="panel">
+        <div class="section-heading"><div><p class="eyebrow">AUSWERTUNG</p><h2>Übersicht exportieren</h2></div><span class="pill">PDF</span></div>
+        <p class="muted">Erstellt eine druckfertige Übersicht mit Preisen, Status und Ziehungsergebnissen.</p>
+        <button id="pdfBtn" class="button primary">PDF-Auswertung öffnen</button>
+      </div>
+    </section>
+    <footer><span>Adventskalender · Lokal auf diesem Gerät gespeichert</span><button id="resetBtn" class="text-button">Alle Daten zurücksetzen</button></footer>
+  </main>
+  <div id="toast" class="toast" role="status"></div>
+  <script src="app.js"></script>
+</body>
+</html>
