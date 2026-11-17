@@ -91,9 +91,51 @@ $("importFile").addEventListener("change",async e=>{const f=e.target.files[0];if
 function download(blob,name){const a=document.createElement("a");const url=URL.createObjectURL(blob);a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
 function dateStamp(){return new Date().toISOString().slice(0,10);}
 $("pdfBtn").addEventListener("click",()=>{saveDoor();const rows=state.doors.map(d=>`<tr><td>${d.number}</td><td>${escapeHtml(d.prize||"—")}</td><td>${escapeHtml(d.completed?"Abgeschlossen":d.locked?"Gesperrt":"Offen")}</td><td>${escapeHtml(d.draws.map(x=>x.name).join(" → ")||"—")}</td><td>${escapeHtml(d.notes||"")}</td></tr>`).join("");const w=window.open("","_blank");if(!w){notify("Bitte Pop-ups für diese Seite erlauben.");return;}w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Adventskalender-Auswertung</title><style>body{font:12px Arial,sans-serif;color:#222;padding:25px}h1{font-size:23px}p{color:#666}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#eee}button{padding:9px 14px;margin:10px 0 20px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Als PDF speichern / Drucken</button><h1>Adventskalender – Auswertung</h1><p>Erstellt am ${new Date().toLocaleString("de-DE")}</p><table><thead><tr><th>Türchen</th><th>Geschenk / Preis</th><th>Status</th><th>Ziehungsverlauf</th><th>Notiz</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);w.document.close();});
-$("resetBtn").addEventListener("click",()=>{if(confirm("Wirklich alle Türchen, Preise und Ziehungen löschen? Diese Aktion kann nicht rückgängig gemacht werden.")){state=freshState();persist();render();notify("Alle Daten zurückgesetzt.");}});
+$("resetBtn").textContent="Türchen und Verlauf zurücksetzen";
+$("resetBtn").addEventListener("click",()=>{
+  if(!confirm("Türchen und Ziehungsverlauf zurücksetzen? Teilnehmer, Geschenke und Notizen bleiben erhalten. Alle Personen und Geschenke sind danach wieder verfügbar."))return;
+  state.participants=$("participantsInput").value;state.gifts=$("giftsInput").value;
+  saveDoorFields();
+  // Restore assigned gifts from older backups if they are missing from the list.
+  const known=new Set(lines(state.gifts).map(nameKey)), missing=[];
+  state.doors.forEach(d=>{const gift=String(d.prize||"").trim();if(gift&&!known.has(nameKey(gift))){known.add(nameKey(gift));missing.push(gift)}});
+  if(missing.length)state.gifts+=(state.gifts&&!/\n$/.test(state.gifts)?"\n":"")+missing.join("\n");
+  state.doors=state.doors.map(d=>({...d,prize:"",giftFromPool:false,locked:false,completed:false,draws:[]}));
+  state.selected=1;persist();render();
+  // Clear the multi-selection and select the first available door again.
+  document.querySelectorAll("#selectionChips .pick-chip").forEach(chip=>chip.click());
+  if($("moreDoors"))$("moreDoors").click();
+  notify("Türchen und Verlauf zurückgesetzt. Teilnehmer und Geschenke bleiben erhalten.");
+});
 window.addEventListener("beforeinstallprompt",e=>{e.preventDefault();installPrompt=e;$("installBtn").hidden=false;});
 $("installBtn").addEventListener("click",async()=>{if(!installPrompt)return;installPrompt.prompt();await installPrompt.userChoice;installPrompt=null;$("installBtn").hidden=true;});
 if("serviceWorker" in navigator)window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
 if(state.autoDay&&new Date().getMonth()===11&&new Date().getDate()<=24)state.selected=new Date().getDate();
 render();
+
+// A quiet snowfall on the page background, controlled by the existing effects switch.
+(function(){
+  const style=document.createElement("style");
+  style.textContent=`
+    .snowfall{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+    .snowfall i{position:absolute;top:-10px;left:var(--x);width:var(--size);height:var(--size);border-radius:50%;background:#90bfce;opacity:.42;animation:snowfall var(--duration) linear var(--delay) infinite}
+    .shell{position:relative;z-index:1}
+    .effects-off .snowfall{display:none}
+    @keyframes snowfall{from{transform:translate3d(0,-10px,0)}to{transform:translate3d(var(--drift),calc(100vh + 20px),0)}}
+    @media (prefers-reduced-motion:reduce){.snowfall{display:none}}
+    @media print{.snowfall{display:none}}
+  `;
+  document.head.appendChild(style);
+  const snow=document.createElement("div");snow.className="snowfall";snow.setAttribute("aria-hidden","true");
+  for(let i=0;i<24;i++){
+    const flake=document.createElement("i");
+    flake.style.setProperty("--x",((i*37+3)%100)+"%");
+    flake.style.setProperty("--size",(2+i%3)+"px");
+    flake.style.setProperty("--duration",(17+i%8*2)+"s");
+    flake.style.setProperty("--delay",(-i*1.7)+"s");
+    flake.style.setProperty("--drift",((i%5-2)*12)+"px");
+    snow.appendChild(flake);
+  }
+  document.body.prepend(snow);
+  document.addEventListener("DOMContentLoaded",()=>{const label=document.querySelector(".effects-switch small");if(label)label.textContent="Schnee & Konfetti · ohne Ton"});
+})();
