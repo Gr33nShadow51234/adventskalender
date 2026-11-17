@@ -40,3 +40,65 @@
   }
   bind('drawBtn');bind('absenceBtn');
 })();
+/* Dunkelmodus und besser sichtbarer Schneefall. */
+(function(){
+  const css=document.createElement('style');
+  css.textContent=`
+    .snowfall{z-index:2}
+    .snowfall i{width:calc(var(--size) + 2px);height:calc(var(--size) + 2px);background:#e4f6ff;opacity:.8;box-shadow:0 0 0 1px #65a6ba99,0 1px 3px #33768a66}
+    body.dark-mode{color-scheme:dark;background:#071b26;color:#d9ebef;--ink:#d9ebef;--muted:#a6c2cc;--blue:#c5e5ed;--border:#335967;--surface:#102c39;--light:#173746}
+    .dark-mode .brand,.dark-mode .eyebrow,.dark-mode .field-label,.dark-mode .settings summary{color:#9ed7e6}
+    .dark-mode .brand span,.dark-mode .intro h1 span{color:#b8df55}
+    .dark-mode .intro h1{color:#e1f3f6}
+    .dark-mode .workspace,.dark-mode .sidebar,.dark-mode .calendar-panel,.dark-mode .settings,.dark-mode dialog:not(.opening){background:#102c39;color:#d9ebef}
+    .dark-mode .switch,.dark-mode .top-button,.dark-mode .file-button,.dark-mode .secondary,.dark-mode .export-bar .button:not(.pdf-action){background:#173a48;color:#d8eef2;border-color:#416573}
+    .dark-mode .switch small,.dark-mode .small,.dark-mode .upload-hint,.dark-mode .history-row small,.dark-mode footer,.dark-mode .help-text,.dark-mode .legend{color:#a6c2cc}
+    .dark-mode .switch input{background:#66848d}.dark-mode .switch input:checked{background:#95c600}
+    .dark-mode .top-button:hover,.dark-mode .file-button:hover,.dark-mode .secondary:hover{background:#235264}
+    .dark-mode .text-input,.dark-mode .settings-body .text-input{background:#0b2330;color:#e7f5f7;border-color:#416573}
+    .dark-mode .text-input::placeholder{color:#91abb5}
+    .dark-mode .sidebar hr{border-color:#335967}
+    .dark-mode .upload-zone{background:#143746;border-color:#5d8a99}.dark-mode .upload-zone label,.dark-mode .manage-link,.dark-mode .text-button{color:#a9dfeb}
+    .dark-mode .upload-zone.dragging{background:#245366}
+    .dark-mode .stat,.dark-mode .stat:nth-child(2){background:#1d4351}
+    .dark-mode .stat small{color:#bbd6de}.dark-mode .stat strong{color:#a2dce9}.dark-mode .stat:nth-child(2) strong{color:#c5e77c}
+    .dark-mode .chip{background:#24505e;color:#d7eef2}
+    .dark-mode .stage{background:#064761}.dark-mode .stage .secondary{background:#ffffff17;color:#fff;border-color:#ffffff55}
+    .dark-mode .door{background:#173b49;color:#c5e8f0;border-color:#416d7a}
+    .dark-mode .door:after{border-color:#4d7d8a}
+    .dark-mode .door.selected{background:#007b99;color:#fff;border-color:#54c5db}
+    .dark-mode .door.done{background:#304b24;color:#d4eca3;border-color:#759a4b}
+    .dark-mode .door.locked{opacity:.7}
+    .dark-mode .export-bar,.dark-mode .history-row{background:#143340;border-color:#355c69;color:#dceff3}
+    .dark-mode .history-empty{border-color:#416a78;color:#b3d1db}
+    .dark-mode .export-bar strong{color:#d6edf3}
+    .dark-mode .progress-track{background:#284f5c}
+    .dark-mode dialog::backdrop{background:#001019c9}
+    .dark-mode .opening-reveal{background:#153947;color:#e4f4f6}
+    .dark-mode .opening-card-label,.dark-mode .opening-name{color:#c7edf5}
+    .dark-mode .opening-reveal small{color:#b3d2d9}
+    .dark-mode .opening-gift{color:#c6e98b}
+    .dark-mode .opening-divider{background:#4e7883}
+    .dark-mode .snowfall i{background:#edfaff;box-shadow:0 0 4px #b6edff88}
+    @media print{body.dark-mode{background:white;color:#003e5c}}
+  `;
+  document.head.appendChild(css);
+  const snow=document.querySelector('.snowfall');
+  if(snow){for(let i=0;i<30;i++){
+    const flake=document.createElement('i');
+    flake.style.setProperty('--x',((i*47+9)%100)+'%');
+    flake.style.setProperty('--size',(3+i%4)+'px');
+    flake.style.setProperty('--duration',(16+(i%9)*2)+'s');
+    flake.style.setProperty('--delay',(-i*2.1)+'s');
+    flake.style.setProperty('--drift',((i%7-3)*10)+'px');
+    snow.appendChild(flake);
+  }}
+  const label=document.createElement('label');label.className='switch dark-switch';
+  label.innerHTML='<span>Dunkelmodus<small>Helles / dunkles Design</small></span><input id="darkModeToggle" type="checkbox" aria-label="Dunkelmodus">';
+  document.querySelector('.top-actions').prepend(label);
+  const toggle=document.getElementById('darkModeToggle');
+  function applyMode(){toggle.checked=!!state.darkMode;document.body.classList.toggle('dark-mode',toggle.checked)}
+  toggle.addEventListener('change',()=>{state.darkMode=toggle.checked;persist();applyMode()});
+  const previousRender=render;render=function(){previousRender();applyMode()};
+  applyMode();
+})();
