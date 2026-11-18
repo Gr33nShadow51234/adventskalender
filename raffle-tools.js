@@ -61,10 +61,12 @@
   }
   byId('giftsInput').addEventListener('input',updateGifts);
 
-  function undoDoor(number){
+  async function undoDoor(number){
     const door=state.doors.find(d=>d.number===number);if(!door||!door.draws.length)return;
+    const original=JSON.stringify(door.draws);
     const extra=door.draws.length>1?' Auch alle Ersatzziehungen dieses Türchens werden entfernt.':'';
-    if(!confirm('Ziehung für Türchen '+number+' rückgängig machen? Person und Geschenk sind danach wieder verfügbar, sofern sie keinem anderen Türchen zugeordnet sind.'+extra))return;
+    if(!await window.raffleConfirm({title:'Ziehung rückgängig machen?',message:'Türchen '+number+' wird wieder geöffnet. Person und Geschenk sind danach wieder verfügbar, sofern sie keinem anderen Türchen zugeordnet sind.'+extra,action:'Ziehung zurücknehmen'}))return;
+    if(state.doors.find(d=>d.number===number)!==door||JSON.stringify(door.draws)!==original){notify('Das Türchen wurde inzwischen geändert. Bitte erneut versuchen.');return;}
     state.participants=byId('participantsInput').value;state.gifts=byId('giftsInput').value;saveDoorFields();
     const gift=String(door.prize||'').trim();
     if(gift&&!linesOf(state.gifts).some(x=>key(x)===key(gift)))state.gifts+=(state.gifts&&!/\n$/.test(state.gifts)?'\n':'')+gift;
@@ -88,6 +90,40 @@
   byId('cancelResetBackup').addEventListener('click',()=>backupDialog.close());
   byId('saveBeforeReset').addEventListener('click',()=>{byId('exportBtn').click();byId('resetBackupStatus').textContent='Download angefordert. Bitte prüfe, ob die Sicherung gespeichert wurde. Du kannst danach den Neustart bestätigen.'});
   byId('proceedReset').addEventListener('click',()=>{backupDialog.close();try{bypass=true;byId('resetBtn').click()}finally{bypass=false}});
+
+  const confirmStyle=document.createElement('style');
+  confirmStyle.textContent=`
+    dialog.calendar-confirm,dialog#resetBackupDialog{max-width:480px;width:calc(100% - 32px);border:1px solid #d5e8ed;border-radius:18px;padding:28px;color:#003e5c;background:#fff;box-shadow:0 24px 70px #00334855}
+    dialog.calendar-confirm::backdrop,dialog#resetBackupDialog::backdrop{background:#002c43a8}
+    .calendar-confirm .confirm-mark,#resetBackupDialog .confirm-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:12px;background:#eaf5dc;color:#668e04;font-size:21px;margin-bottom:16px}
+    .calendar-confirm h2,#resetBackupDialog h2{font-size:21px;line-height:1.2;color:#005477;margin:0 0 10px}
+    .calendar-confirm p,#resetBackupDialog p{font-size:13px;line-height:1.55;color:#557889;margin:0 0 12px}
+    .calendar-confirm .confirm-actions{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:22px}
+    .calendar-confirm .button,#resetBackupDialog .button{min-height:40px}
+    body.dark-mode dialog.calendar-confirm,body.dark-mode dialog#resetBackupDialog{background:#102c39;border-color:#416573;color:#d9ebef}
+    .dark-mode .calendar-confirm h2,.dark-mode #resetBackupDialog h2{color:#d9f0f4}
+    .dark-mode .calendar-confirm p,.dark-mode #resetBackupDialog p{color:#b1ccd4}
+    .dark-mode .calendar-confirm .confirm-mark,.dark-mode #resetBackupDialog .confirm-mark{background:#294830;color:#c8e884}
+    @media(max-width:480px){.calendar-confirm .confirm-actions,#resetBackupDialog .backup-actions{flex-direction:column}.calendar-confirm .button,#resetBackupDialog .button{width:100%}}
+  `;
+  document.head.appendChild(confirmStyle);
+  const confirmDialog=document.createElement('dialog');confirmDialog.className='calendar-confirm';
+  confirmDialog.setAttribute('aria-labelledby','calendarConfirmTitle');confirmDialog.setAttribute('aria-describedby','calendarConfirmMessage');
+  confirmDialog.innerHTML='<span class="confirm-mark" aria-hidden="true">✦</span><h2 id="calendarConfirmTitle"></h2><p id="calendarConfirmMessage"></p><div class="confirm-actions"><button id="calendarConfirmCancel" class="button secondary" type="button">Abbrechen</button><button id="calendarConfirmAccept" class="button primary" type="button"></button></div>';
+  document.body.appendChild(confirmDialog);
+  let resolveConfirmation=null;
+  function settleConfirmation(answer){const resolve=resolveConfirmation;resolveConfirmation=null;if(confirmDialog.open)confirmDialog.close();if(resolve)resolve(answer)}
+  byId('calendarConfirmCancel').addEventListener('click',()=>settleConfirmation(false));
+  byId('calendarConfirmAccept').addEventListener('click',()=>settleConfirmation(true));
+  confirmDialog.addEventListener('cancel',e=>{e.preventDefault();settleConfirmation(false)});
+  confirmDialog.addEventListener('close',()=>{if(resolveConfirmation)settleConfirmation(false)});
+  window.raffleConfirm=({title,message,action})=>new Promise(resolve=>{
+    if(confirmDialog.open||resolveConfirmation){resolve(false);return}
+    byId('calendarConfirmTitle').textContent=title;byId('calendarConfirmMessage').textContent=message;byId('calendarConfirmAccept').textContent=action;
+    resolveConfirmation=resolve;
+    try{confirmDialog.showModal();byId('calendarConfirmCancel').focus()}catch(e){resolveConfirmation=null;resolve(false);notify('Bestätigung konnte nicht geöffnet werden.')}
+  });
+  const mark=document.createElement('span');mark.className='confirm-mark';mark.textContent='✦';mark.setAttribute('aria-hidden','true');backupDialog.prepend(mark);
 
   const oldRender=render;render=function(){oldRender();updateSearch();updateGifts();addUndoButtons()};
   updateSearch();updateGifts();addUndoButtons();
