@@ -92,8 +92,9 @@ function download(blob,name){const a=document.createElement("a");const url=URL.c
 function dateStamp(){return new Date().toISOString().slice(0,10);}
 $("pdfBtn").addEventListener("click",()=>{saveDoor();const rows=state.doors.map(d=>`<tr><td>${d.number}</td><td>${escapeHtml(d.prize||"—")}</td><td>${escapeHtml(d.completed?"Abgeschlossen":d.locked?"Gesperrt":"Offen")}</td><td>${escapeHtml(d.draws.map(x=>x.name).join(" → ")||"—")}</td><td>${escapeHtml(d.notes||"")}</td></tr>`).join("");const w=window.open("","_blank");if(!w){notify("Bitte Pop-ups für diese Seite erlauben.");return;}w.document.write(`<!doctype html><html lang="de"><head><meta charset="utf-8"><title>Adventskalender-Auswertung</title><style>body{font:12px Arial,sans-serif;color:#222;padding:25px}h1{font-size:23px}p{color:#666}table{border-collapse:collapse;width:100%;margin-top:20px}th,td{border:1px solid #ccc;padding:8px;text-align:left;vertical-align:top}th{background:#eee}button{padding:9px 14px;margin:10px 0 20px}@media print{button{display:none}}</style></head><body><button onclick="window.print()">Als PDF speichern / Drucken</button><h1>Adventskalender – Auswertung</h1><p>Erstellt am ${new Date().toLocaleString("de-DE")}</p><table><thead><tr><th>Türchen</th><th>Geschenk / Preis</th><th>Status</th><th>Ziehungsverlauf</th><th>Notiz</th></tr></thead><tbody>${rows}</tbody></table></body></html>`);w.document.close();});
 $("resetBtn").textContent="Türchen und Verlauf zurücksetzen";
-$("resetBtn").addEventListener("click",()=>{
-  if(!confirm("Türchen und Ziehungsverlauf zurücksetzen? Teilnehmer, Geschenke und Notizen bleiben erhalten. Alle Personen und Geschenke sind danach wieder verfügbar."))return;
+$("resetBtn").addEventListener("click",async()=>{
+  if(typeof window.raffleConfirm!=="function"){notify("Bestätigung ist noch nicht verfügbar. Bitte Seite neu laden.");return;}
+  if(!await window.raffleConfirm({title:"Kalender neu starten?",message:"Alle Türchen und der Ziehungsverlauf werden zurückgesetzt. Teilnehmer, Geschenke und Notizen bleiben erhalten. Alle Personen und Geschenke sind danach wieder verfügbar.",action:"Zurücksetzen"}))return;
   state.participants=$("participantsInput").value;state.gifts=$("giftsInput").value;
   saveDoorFields();
   // Restore assigned gifts from older backups if they are missing from the list.
